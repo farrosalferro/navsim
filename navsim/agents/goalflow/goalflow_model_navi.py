@@ -110,7 +110,10 @@ class GoalFlowNaviModel(nn.Module):
         
         token = features['token']
         camera_feature: torch.Tensor = features["camera_feature"]
-        lidar_feature: torch.Tensor = features["lidar_feature"]
+        if self._config.latent:
+            lidar_feature = None
+        else:
+            lidar_feature: torch.Tensor = features["lidar_feature"]
         status_feature: torch.Tensor = features["status_feature"]
         if self._config.training:
             dac_score_feature: torch.Tensor = features["dac_score_feature"]

@@ -20,6 +20,7 @@ config:
   only_perception: False
   v99_pretrained_path: ''
 
+  latent: False
 
   bev_semantic_weight: 10
   dac_score_weight: 0.005
