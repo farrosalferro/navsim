@@ -15,12 +15,19 @@
 *.pkl
 *.jpg
 *.pcd
+*.ipynb
+*.ckpt
+*.npz
+*.gz
+*.npy
 
 # exp
 exp
 
 # data
 dataset
+goalflow_data
+checkpoint
 
 # lsf
 *.bsub

@@ -219,6 +219,41 @@ class PDMScorer:
                 )
             )
         return results
+    
+    def score_dac(
+        self,
+        states: npt.NDArray[np.float64],
+        observation: PDMObservation,
+        centerline: PDMPath,
+        route_lane_ids: List[str],
+        drivable_area_map: PDMDrivableMap,
+    ) -> npt.NDArray[np.float64]:
+        """
+        Scores proposal similar to nuPlan's closed-loop metrics
+        :param states: array representation of simulated proposals
+        :param observation: PDM's observation class
+        :param centerline: path of the centerline
+        :param route_lane_ids: list containing on-route lane ids
+        :param drivable_area_map: Occupancy map of drivable are polygons
+        :return: array containing score of each proposal
+        """
+
+        # initialize & lazy load class values
+        self._reset(
+            states,
+            observation,
+            centerline,
+            route_lane_ids,
+            drivable_area_map,
+            human_past_trajectory=None,
+        )
+
+        # fill value ego-area array (used in multiple metrics)
+        self._calculate_ego_area()
+
+        self._calculate_drivable_area_compliance()
+
+        return self._multi_metrics[MultiMetricIndex.DRIVABLE_AREA]
 
     def _aggregate_pdm_scores(self) -> npt.NDArray[np.float64]:
         """

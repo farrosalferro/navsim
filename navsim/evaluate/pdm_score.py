@@ -20,7 +20,8 @@ from navsim.planning.simulation.planner.pdm_planner.scoring.pdm_scorer import PD
 from navsim.planning.simulation.planner.pdm_planner.simulation.pdm_simulator import PDMSimulator
 from navsim.planning.simulation.planner.pdm_planner.utils.pdm_array_representation import ego_states_to_state_array
 from navsim.traffic_agents_policies.abstract_traffic_agents_policy import AbstractTrafficAgentsPolicy
-
+from navsim.common.dataclasses import PDMResults
+from navsim.planning.simulation.planner.pdm_planner.utils.pdm_enums import MultiMetricIndex
 
 def transform_trajectory(pred_trajectory: Trajectory, initial_ego_state: EgoState) -> InterpolatedTrajectory:
     """
@@ -201,3 +202,35 @@ def pdm_score_from_interpolated_trajectory(
                 pdm_result.at[0, column] = 1
 
     return pdm_result, simulated_states[pred_idx]
+
+def dac_score(
+    metric_cache: MetricCache,
+    model_trajectory: List[Trajectory],
+    future_sampling: TrajectorySampling,
+    simulator: PDMSimulator,
+    scorer: PDMScorer
+) -> PDMResults:
+    """
+    Runs PDM-Score and saves results in dataclass.
+    :param metric_cache: Metric cache dataclass
+    :param model_trajectory: Predicted trajectory in ego frame.
+    :return: Dataclass of PDM-Subscores.
+    """
+
+    initial_ego_state = metric_cache.ego_state
+
+    traj_num=len(model_trajectory)
+    trajectory_list=[transform_trajectory(model_trajectory[i],initial_ego_state) for i in range(traj_num)]
+    states_list=[get_trajectory_as_array(trajectory_list[i],future_sampling,initial_ego_state.time_point) for i in range(traj_num)]
+
+    trajectory_states=np.concatenate([states[None,...] for states in states_list],axis=0)
+
+    scores = scorer.score_dac(
+        trajectory_states,
+        metric_cache.observation,
+        metric_cache.centerline,
+        metric_cache.route_lane_ids,
+        metric_cache.drivable_area_map,
+    )
+    drivable_area_compliance = scorer._multi_metrics[MultiMetricIndex.DRIVABLE_AREA]
+    return drivable_area_compliance
